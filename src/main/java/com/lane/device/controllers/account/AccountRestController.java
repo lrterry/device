@@ -47,10 +47,15 @@ public class AccountRestController {
         return accountRepository.findAll();
     }
 
+    @RequestMapping(method = RequestMethod.GET, value = "/{id}")
+    Account getAccount(@PathVariable Long id) {
+        validateUser(id);
+        return accountRepository.findOne(id);
+    }
+
     private void validateUser(Long id) {
         accountRepository.findById(id).orElseThrow(
                 () -> new UserIdNotFoundException(id)
         );
-    }
-
+   }
 }

@@ -3,7 +3,6 @@ package com.lane.device.controllers.device;
 import com.lane.device.DeviceApplication;
 import com.lane.device.entities.Account;
 import com.lane.device.entities.Device;
-import com.lane.device.exceptions.UserNotFoundException;
 import com.lane.device.repositories.AccountRepository;
 import com.lane.device.repositories.DeviceRepository;
 import org.junit.Before;
@@ -95,7 +94,7 @@ public class DeviceRestControllerTest {
 
     @Test
     public void readSingleDevice() throws Exception {
-        mockMvc.perform(get("/" + username + "/devices/" + this.devices.get(0).getId()))
+        mockMvc.perform(get("/devices/" + this.devices.get(0).getId()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(contentType))
                 .andExpect(jsonPath("$.id", is(this.devices.get(0).getId().intValue())))

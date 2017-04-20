@@ -5,17 +5,18 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Optional;
+
 
 /**
  * Created by lane on 3/20/17.
  */
 
 @Entity
-public class Device implements Serializable{
+public class Device implements Serializable {
 
-    @ManyToOne
+
     @JsonIgnore
+    @ManyToOne
     private Account account;
 
     @Id

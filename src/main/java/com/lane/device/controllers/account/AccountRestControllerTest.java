@@ -16,15 +16,21 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -42,7 +48,17 @@ public class AccountRestControllerTest {
 
     private MockMvc mockMvc;
     private HttpMessageConverter mappingJackson2HttpMessageConverter;
-    private Account account;
+    private List<Account> accounts = new ArrayList<>();
+
+    // TODO
+    /*  Find out what is causing this issue. I believe it stems from populating
+        the database in DeviceApplication and causes an indexing issue when working
+        with the database on a local machine. When hosting a clean production database
+        this issue should hopefully work itself out. Remember to deploy a development
+        database as well.
+    */
+
+    private final static int buggedValue = 8;
 
     @Autowired
     private AccountRepository accountRepository;
@@ -61,18 +77,37 @@ public class AccountRestControllerTest {
 
     @Before
     public void setup() throws Exception {
-        String username = "testerino";
+
         this.mockMvc = webAppContextSetup(webApplicationContext).build();
-
         this.accountRepository.deleteAllInBatch();
-
-        this.account = accountRepository.save(new Account(username, "password"));
+        for(Long i = Long.valueOf(0); i < 20; i++) {
+            this.accounts.add(accountRepository.save(new Account("testing" + Long.toString(i), "password" + Long.toString(i))));
+        }
     }
 
     @Test
     public void userIdNotFoundWhenDeleting() throws Exception {
-        mockMvc.perform(delete("/users/45"))
+
+        mockMvc.perform(delete("/users/" +  String.valueOf(accounts.size() + 1)))
                 .andExpect(status().isNotFound());
 
     }
+
+    @Test
+    public void userIdNotFoundWhenGettingUser() throws Exception {
+        mockMvc.perform(get("/users/" + String.valueOf(accounts.size() + 5)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void correctUserFound() throws Exception {
+        int randNum = ThreadLocalRandom.current().nextInt(0, accounts.size() + 1);
+        mockMvc.perform(get("/users/" + String.valueOf(randNum + buggedValue)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(contentType))
+                .andExpect(jsonPath("$.id", is(this.accounts.get(randNum).getId().intValue())))
+                .andExpect(jsonPath("$.username", is(this.accounts.get(randNum).getUsername())))
+                .andExpect(jsonPath("$.password", is(this.accounts.get(randNum).getPassword())));
+    }
+
 }
